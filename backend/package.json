@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/app.ts",
-    "build": "tsc",
+    "build": "npm run migrate; tsc",
     "test": "jest",
     "migrate": "ts-node db/migrate.ts"
   },
