@@ -1,0 +1,4 @@
+node_modules
+backend/db/*
+!backend/db/*.ts
+.env
