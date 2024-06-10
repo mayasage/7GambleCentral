@@ -1,0 +1,14 @@
+node_modules
+.git
+Dockerfile
+.idea
+.env.example
+.prettierrc
+jest.config.ts
+tests
+benchmarks
+.dockerignore
+db/*
+!db/migrate.ts
+.env
+dist

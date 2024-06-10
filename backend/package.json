@@ -6,8 +6,7 @@
   "scripts": {
     "start": "nodemon src/app.ts",
     "build": "tsc",
-    "test": "jest",
-    "migrate": "ts-node db/migrate.ts"
+    "test": "jest"
   },
   "dependencies": {
     "@types/bcrypt": "5.0.2",

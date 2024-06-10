@@ -3,8 +3,6 @@ import 'dotenv/config';
 const sqlite3 = require('sqlite3').verbose();
 import bcryptService from './bcrypt.service';
 
-const db = new sqlite3.Database(process.env.DB_PATH);
-
 const dbm = new sqlite3.Database(':memory:');
 dbm.run(
   `
@@ -19,6 +17,23 @@ dbm.run(
       console.error('Error creating table:', err.message);
     } else {
       console.log('Sessions table created in memory.');
+    }
+  },
+);
+dbm.run(
+  `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        refresh_token TEXT UNIQUE
+      );
+    `,
+  (err: { message: any }) => {
+    if (err) {
+      console.error('Error creating table:', err.message);
+    } else {
+      console.log('User table created successfully.');
     }
   },
 );
@@ -49,7 +64,7 @@ export default {
   async createUser(username: string, password: string): Promise<unknown> {
     const hashedPwd = await bcryptService.hashPwd(password);
     return new Promise((resolve, reject) => {
-      db.run(
+      dbm.run(
         'INSERT INTO users (username, password) VALUES (?, ?)',
         [username, hashedPwd],
         (err: any) => {
@@ -69,7 +84,7 @@ export default {
     password: string;
   } | null> {
     return new Promise((resolve, reject) => {
-      db.get(
+      dbm.get(
         'SELECT * FROM users WHERE username = ?',
         [username],
         (err: { message: any }, row: any) => {
@@ -94,7 +109,7 @@ export default {
 
   updateRefreshToken(username: string, refreshToken: string | null) {
     return new Promise((resolve, reject) => {
-      db.run(
+      dbm.run(
         'UPDATE users SET refresh_token = ? WHERE username = ?',
         [refreshToken, username],
         function (err: any) {

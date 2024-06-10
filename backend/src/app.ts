@@ -6,8 +6,7 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
 import 'dotenv/config';
-
-console.log(`PROCESS.ENV`, process.env);
+import path from 'node:path';
 
 const app = express();
 app.use(
@@ -23,5 +22,22 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use('/api/game', gameRouter);
 app.use('/api/auth', authRouter);
+app.use(
+  express.static(path.join(__dirname, './dist'), {
+    setHeaders: (res, filePath) => {
+      const ext = path.extname(filePath);
+      if (ext === '.js') {
+        res.setHeader('Content-Type', 'application/javascript');
+      } else if (ext === '.css') {
+        res.setHeader('Content-Type', 'text/css');
+      } else if (ext === '.html') {
+        res.setHeader('Content-Type', 'text/html');
+      }
+    },
+  }),
+);
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './dist/index.html'));
+});
 const server = app.listen(3000, () => `Listening on port 3000`);
 export default server;
