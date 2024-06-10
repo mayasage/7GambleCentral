@@ -15,12 +15,12 @@ ENV ACCESS_TOKEN_SECRET $ACCESS_TOKEN_SECRET
 ENV REFRESH_TOKEN_SECRET $REFRESH_TOKEN_SECRET
 ENV DB_PATH $DB_PATH
 
-WORKDIR /app
-COPY . /app
+COPY . /app/backend
+WORKDIR /app/backend
 
 RUN npm install
 RUN npm install -g ts-node
 RUN npm run build
 CMD ["sh", "-c", "ts-node db/migrate.ts && node dist/app.js"]
 
-EXPOSE 3000
+EXPOSE 4000

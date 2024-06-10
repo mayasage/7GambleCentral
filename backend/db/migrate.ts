@@ -1,5 +1,7 @@
 import 'dotenv/config';
 
+console.log(`PROCESS.ENV`, process.env);
+
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(process.env.DB_PATH);
 
@@ -29,7 +31,7 @@ function create() {
       } else {
         console.log('User table created successfully.');
       }
-    },
+    }
   );
 }
 

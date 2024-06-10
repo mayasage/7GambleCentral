@@ -7,13 +7,15 @@ import cors from 'cors';
 import morgan from 'morgan';
 import 'dotenv/config';
 
+console.log(`PROCESS.ENV`, process.env);
+
 const app = express();
 app.use(
   morgan(':method :url :status :res[content-length] - :response-time ms'),
 );
 app.use(
   cors({
-    origin: ['http://localhost:5173', process.env.NETLIFY_SERVER!],
+    origin: 'http://localhost:5173',
     credentials: true,
   }),
 );
