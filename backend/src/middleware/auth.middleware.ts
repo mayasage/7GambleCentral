@@ -14,9 +14,10 @@ export async function verifyAccessToken(
 ) {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
-    return res.status(403).send(
+    console.error(new Error('token not found in authHeader'));
+    return res.status(400).send(
       responseService.createErrorResponse({
-        message: 'Invalid token received ❌',
+        message: 'Token not found ❌',
       }),
     );
   }
@@ -26,6 +27,7 @@ export async function verifyAccessToken(
       username: string;
     } = await jwtService.verifyAccessToken(accessToken);
     if (!('username' in r)) {
+      console.error(new Error('username not found in access token'));
       return res.status(403).send(
         responseService.createErrorResponse({
           message: 'Invalid token received ❌',
@@ -35,9 +37,10 @@ export async function verifyAccessToken(
     req.user = { username: r.username };
     next();
   } catch (err) {
-    return res.status(403).send(
+    console.error(err);
+    return res.status(500).send(
       responseService.createErrorResponse({
-        message: 'Invalid token received ❌',
+        message: 'Internal Server Error ❌',
       }),
     );
   }
@@ -50,9 +53,10 @@ export async function verifyRefreshToken(
 ) {
   const refreshToken = req.cookies.jwt;
   if (!refreshToken) {
-    return res.status(403).send(
+    console.error(new Error('refresh token not found'));
+    return res.status(400).send(
       responseService.createErrorResponse({
-        message: `Invalid token received ❌`,
+        message: `Token not received ❌`,
       }),
     );
   }
@@ -61,6 +65,7 @@ export async function verifyRefreshToken(
       username: string;
     } = await jwtService.verifyRefreshToken(refreshToken);
     if (!('username' in r)) {
+      console.error(new Error('username not found in refresh token'));
       return res.status(403).send(
         responseService.createErrorResponse({
           message: 'Invalid token received ❌',
@@ -71,6 +76,7 @@ export async function verifyRefreshToken(
     try {
       await dbService.compareRefreshToken(username, refreshToken);
     } catch (err) {
+      console.error(err);
       return res.status(403).send(
         responseService.createErrorResponse({
           message: 'Invalid token received ❌',
@@ -80,9 +86,10 @@ export async function verifyRefreshToken(
     req.user = { username: username };
     next();
   } catch (err) {
-    return res.status(403).send(
+    console.error(err);
+    return res.status(500).send(
       responseService.createErrorResponse({
-        message: 'Invalid token received ❌',
+        message: 'Internal Server Error ❌',
       }),
     );
   }
@@ -95,7 +102,8 @@ export function blockOnAccessToken(
 ) {
   const authHeader = req.headers['authorization'];
   if (authHeader) {
-    return res.status(403).send(
+    console.error(new Error('token not found in authHeader'));
+    return res.status(400).send(
       responseService.createErrorResponse({
         message: `User can't perform this operation while logged in ❌`,
       }),

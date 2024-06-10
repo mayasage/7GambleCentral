@@ -11,35 +11,52 @@ import responseService from '../service/response.service';
 const authRouter = express.Router();
 
 async function updateToken(username: string, res: Response) {
-  const jwtObject = { username };
-  const accessToken = jwtService.generateAccessToken(jwtObject);
-  const refreshToken = jwtService.generateRefreshToken(jwtObject);
-  await dbService.updateRefreshToken(username, refreshToken);
-  res.cookie('jwt', refreshToken, {
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-  res.status(200).send(
-    responseService.createSuccessResponse({
-      data: { accessToken: accessToken },
-    }),
-  );
+  try {
+    const jwtObject = { username };
+    const accessToken = jwtService.generateAccessToken(jwtObject);
+    const refreshToken = jwtService.generateRefreshToken(jwtObject);
+    await dbService.updateRefreshToken(username, refreshToken);
+    res.cookie('jwt', refreshToken, {
+      httpOnly: true,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).send(
+      responseService.createSuccessResponse({
+        data: { accessToken: accessToken },
+      }),
+    );
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).send(
+      responseService.createErrorResponse({
+        message: err.message,
+      }),
+    );
+  }
 }
 
 authRouter.post('/login', blockOnAccessToken, async (req, res) => {
   const { username, password } = req.body;
   try {
     const r = await dbService.verifyUser(username, password);
+    if (r.success && !r.user) {
+      return res.status(400).send(
+        responseService.createErrorResponse({
+          message: 'Invalid Credentials ❌',
+        }),
+      );
+    }
     if (!r.success || !r.user || !r.user.username) {
       return res.status(400).send(
         responseService.createErrorResponse({
-          message: 'User not found ❌',
+          message: 'Invalid Credentials ❌',
         }),
       );
     }
     await updateToken(r.user.username, res);
   } catch (err: any) {
-    return res.status(400).send(
+    console.error(err);
+    return res.status(500).send(
       responseService.createErrorResponse({
         message: err.message,
       }),
@@ -47,16 +64,25 @@ authRouter.post('/login', blockOnAccessToken, async (req, res) => {
   }
 });
 
-authRouter.post('/signup', blockOnAccessToken, async (req, res, next) => {
+authRouter.post('/signup', blockOnAccessToken, async (req, res) => {
   const { username, password } = req.body;
   try {
     await dbService.createUser(username, password);
   } catch (err: any) {
-    return res.status(400).send(
-      responseService.createErrorResponse({
-        message: err.errno === 19 ? 'User already exist ❌' : err.message,
-      }),
-    );
+    console.error(err);
+    if (err.errno === 19) {
+      return res.status(400).send(
+        responseService.createErrorResponse({
+          message: 'User already exist ❌',
+        }),
+      );
+    } else {
+      return res.status(500).send(
+        responseService.createErrorResponse({
+          message: err.message,
+        }),
+      );
+    }
   }
   await updateToken(username, res);
 });
@@ -64,7 +90,7 @@ authRouter.post('/signup', blockOnAccessToken, async (req, res, next) => {
 authRouter.post(
   '/logout',
   verifyRefreshToken,
-  async (req: CustomRequest, res, next) => {
+  async (req: CustomRequest, res) => {
     try {
       if (req.user && req.user.username) {
         await dbService.updateRefreshToken(req.user.username, null);
@@ -78,9 +104,10 @@ authRouter.post(
         );
       }
     } catch (err: any) {
-      return res.status(400).send(
+      console.error(err);
+      return res.status(500).send(
         responseService.createErrorResponse({
-          message: 'User not found ❌',
+          message: 'Internal Server Error ❌',
         }),
       );
     }
@@ -100,7 +127,8 @@ authRouter.get(
         }),
       );
     } catch (err: any) {
-      return res.status(400).send(
+      console.error(err);
+      return res.status(500).send(
         responseService.createErrorResponse({
           message: err.message,
         }),

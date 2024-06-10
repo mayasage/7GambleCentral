@@ -10,8 +10,8 @@ dbm.run(
   `
     CREATE TABLE sessions (
       sessionId TEXT PRIMARY KEY,
-      state JSON NOT NULL,
-      history JSON NOT NULL
+      gameState JSON NOT NULL,
+      gameHistory JSON NOT NULL
     );
   `,
   (err: { message: any }) => {
@@ -41,8 +41,8 @@ export interface GameState {
 
 interface Session {
   sessionId: string;
-  state: GameState;
-  history: GameState[];
+  gameState: GameState;
+  gameHistory: GameState[];
 }
 
 export default {
@@ -116,11 +116,16 @@ export default {
     return user.refresh_token === refreshToken;
   },
 
-  createSession(sessionId: string, state: GameState, history: GameState[]) {
+  createSession(
+    sessionId: string,
+    gameState: GameState,
+    gameHistory: GameState[],
+  ) {
     return new Promise((resolve, reject) => {
       dbm.run(
-        'INSERT INTO sessions (sessionId, state, history) VALUES (?, ?, ?)',
-        [sessionId, JSON.stringify(state), JSON.stringify(history)],
+        'INSERT INTO sessions (sessionId, gameState, gameHistory) VALUES (?,' +
+          ' ?, ?)',
+        [sessionId, JSON.stringify(gameState), JSON.stringify(gameHistory)],
         (err: any) => {
           if (err) {
             reject(err);
@@ -143,8 +148,8 @@ export default {
             | Session
             | {
                 sessionId: string;
-                state: string;
-                history: string;
+                gameState: string;
+                gameHistory: string;
               }
             | null,
         ) => {
@@ -153,16 +158,16 @@ export default {
           } else {
             let parsedSession: Session | null = null;
             if (row) {
-              if (typeof row.state === 'string') {
-                row.state = JSON.parse(row.state);
+              if (typeof row.gameState === 'string') {
+                row.gameState = JSON.parse(row.gameState);
               }
-              if (typeof row.history === 'string') {
-                row.history = JSON.parse(row.history);
+              if (typeof row.gameHistory === 'string') {
+                row.gameHistory = JSON.parse(row.gameHistory);
               }
               parsedSession = {
                 sessionId,
-                state: row.state as GameState,
-                history: row.history as GameState[] | [],
+                gameState: row.gameState as GameState,
+                gameHistory: row.gameHistory as GameState[] | [],
               };
             }
             resolve(parsedSession);
@@ -185,23 +190,23 @@ export default {
                   | Session
                   | {
                       sessionId: string;
-                      state: string;
-                      history: string;
+                      gameState: string;
+                      gameHistory: string;
                     }
                   | null,
               ) => {
                 let parsedSession: Session | null = null;
                 if (r) {
-                  if (typeof r.state === 'string') {
-                    r.state = JSON.parse(r.state);
+                  if (typeof r.gameState === 'string') {
+                    r.gameState = JSON.parse(r.gameState);
                   }
-                  if (typeof r.history === 'string') {
-                    r.history = JSON.parse(r.history);
+                  if (typeof r.gameHistory === 'string') {
+                    r.gameHistory = JSON.parse(r.gameHistory);
                   }
                   parsedSession = {
                     sessionId: r.sessionId,
-                    state: r.state as GameState,
-                    history: r.history as GameState[] | [],
+                    gameState: r.gameState as GameState,
+                    gameHistory: r.gameHistory as GameState[] | [],
                   };
                 }
                 return parsedSession;
@@ -215,13 +220,14 @@ export default {
 
   async updateSession(
     sessionId: string,
-    state: GameState,
-    history: GameState[],
+    gameState: GameState,
+    gameHistory: GameState[],
   ) {
     return new Promise((resolve, reject) => {
       dbm.run(
-        'UPDATE sessions SET state = ?, history = ? WHERE sessionId = ?',
-        [JSON.stringify(state), JSON.stringify(history), sessionId],
+        'UPDATE sessions SET gameState = ?, gameHistory = ? WHERE sessionId' +
+          ' = ?',
+        [JSON.stringify(gameState), JSON.stringify(gameHistory), sessionId],
         (err: any) => {
           if (err) {
             reject(err);
@@ -251,7 +257,7 @@ export default {
 
   clearAllSessions() {
     return new Promise((resolve, reject) => {
-      dbm.run('DELETE FROM sessions', [], (err: any, res: any) => {
+      dbm.run('DELETE FROM sessions', [], (err: any) => {
         if (err) {
           reject(err);
         } else {

@@ -12,7 +12,7 @@ gameRouter.use(verifyAccessToken);
 const startSchema = {
   type: 'object',
   properties: {
-    state: {
+    gameState: {
       type: 'object',
       properties: {
         chips: { type: 'number', default: 5000 },
@@ -53,13 +53,17 @@ const startSchema = {
       minItems: 1,
     },
   },
-  required: ['state', 'history'],
+  required: ['gameState', 'history'],
   additionalProperties: false,
 };
 gameRouter.post('/start', validateSchema(startSchema), async (req, res) => {
   const sessionId = randService.uuid();
   try {
-    await dbService.createSession(sessionId, req.body.state, req.body.history);
+    await dbService.createSession(
+      sessionId,
+      req.body.gameState,
+      req.body.history,
+    );
   } catch (err) {
     console.error(err);
     return res.status(403).send(
@@ -163,7 +167,7 @@ const rollSchema = {
   additionalProperties: false,
 };
 gameRouter.post(
-  '/roll/:sessionId',
+  '/roll_die/:sessionId',
   validateSchema(rollSchema),
   async (req, res) => {
     const {
@@ -192,20 +196,27 @@ gameRouter.post(
         }),
       );
     }
-    const { state } = session;
-    if (state.chips <= 0 || stake > state.chips) {
+    const { gameState } = session;
+    if (stake > gameState.chips && gameState.chips >= 100) {
+      return res.status(500).send(
+        responseService.createErrorResponse({
+          message: 'Bet Lower ❗',
+        }),
+      );
+    }
+    if (gameState.chips <= 0 || stake > gameState.chips) {
       return res.status(500).send(
         responseService.createErrorResponse({
           message: 'Game over ❌',
         }),
       );
     }
-    state.bet = bet;
-    state.stake = stake;
-    state.chips -= stake;
-    state.delta = -stake;
+    gameState.bet = bet;
+    gameState.stake = stake;
+    gameState.chips -= stake;
+    gameState.delta = -stake;
     const diceRoll = [randService.int(1, 7), randService.int(1, 7)];
-    state.diceRoll = diceRoll;
+    gameState.diceRoll = diceRoll;
     const score = diceRoll[0] + diceRoll[1];
     let winRate: 0 | -1 | 2 | 5 = 0;
     if ((bet === '7u' && score > 7) || (bet === '7d' && score < 7)) {
@@ -214,14 +225,14 @@ gameRouter.post(
     if (bet === '7' && score === 7) {
       winRate = 5;
     }
-    state.winRate = winRate;
+    gameState.winRate = winRate;
     if (winRate > 0) {
-      state.delta = winRate * stake;
-      state.chips += state.delta;
+      gameState.delta = winRate * stake;
+      gameState.chips += gameState.delta;
     }
-    session.history.push(state);
+    session.gameHistory.push(gameState);
     try {
-      await dbService.updateSession(sessionId, state, session.history);
+      await dbService.updateSession(sessionId, gameState, session.gameHistory);
     } catch (err) {
       console.error(err);
       return res.status(500).send(
@@ -232,7 +243,7 @@ gameRouter.post(
     }
     res.status(200).send(
       responseService.createSuccessResponse({
-        data: { state, history: session.history },
+        data: { gameState, history: session.gameHistory },
       }),
     );
   },

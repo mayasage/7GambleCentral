@@ -1,0 +1,15 @@
+export const funnyGamblerQuotes = [
+  'Money won is twice as sweet as money earned ✅',
+  'The only sure thing about luck is that it will change 🎗',
+  'The best throw of the dice is to throw them away 🎲',
+  'Gambling is the future on the internet 🌍',
+  'Life is a gamble, so roll the dice 🎲',
+  `Luck is what happens when preparation meets opportunity 💸`,
+  "You gotta know when to hold 'em, know when to fold 'em 🃏",
+  "Life's too short to bet the under 🎭",
+  `The house doesn't always win. Sometimes it just lets you think you're winning 🎭`,
+  'My favorite machine at the casino is the ATM 🏧',
+  "I'm not a gambler, I'm a risk analyst with a great sense of humor 📶",
+  "I don't always gamble, but when I do, it's with my future 🕕",
+  `I'm not sure what's more addictive: gambling or the free drinks 🍹`,
+];
