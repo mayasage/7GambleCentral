@@ -5,6 +5,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import morgan from 'morgan';
+import 'dotenv/config';
 
 const app = express();
 app.use(
@@ -12,7 +13,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: 'http://localhost:5173',
+    origin: ['http://localhost:5173', process.env.NETLIFY_SERVER!],
     credentials: true,
   }),
 );
